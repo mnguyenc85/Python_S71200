@@ -1,0 +1,11 @@
+Kết nối PLC
+1. S7-1200
+a. Python - snap7
+  _01_: đọc từ PLC đơn giản nhất
+  _02_: Snap7 Server dùng mô phỏng PLC
+  _03_: Giao diện UI và đọc từ PLC
+  _04_: Giao diện UI và polling từ PLC
+
+b. Python - Modbus TCP
+  _11_: Mô phỏng modbus RTU slave
+
