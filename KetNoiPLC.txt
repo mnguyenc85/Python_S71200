@@ -8,4 +8,5 @@ a. Python - snap7
 
 b. Python - Modbus TCP
   _11_: Mô phỏng modbus RTU slave
+  _12_: Modbus client để đọc qua RTU Over TCP
 
