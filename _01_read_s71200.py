@@ -6,9 +6,19 @@ import sys
 from snap7.client import Client
 from snap7.type import Areas
 
-def read_db(ip, port, db_number, start, size, rack = 0, slot = 1):
+def read_db(ip: str, port: int, db_number: int, start: int, size: int, rack = 0, slot = 1):
   '''
   Đọc dữ liệu từ 1 DB
+
+  :param ip: địa chỉ ip của PLC
+  :param port: địa chỉ cổng của PLC
+  :param db_number: số db (theo chương trình PLC)
+  :param start: địa chỉ bắt đầu đọc (byte trong db)
+  :param size: số lượng byte đọc
+  :param rack: số rack của PLC (theo cấu hình PLC)
+  :param slot: số slot của PLC (theo cấu hình PLC)
+
+  :return: mảng dữ liệu đọc được (byte[]) hoặc None nếu có lỗi
   '''
   client = Client()
   try:
@@ -26,6 +36,15 @@ def read_db(ip, port, db_number, start, size, rack = 0, slot = 1):
 def read_input(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1):
   '''
   Đọc dữ liệu đầu vào (inputs)
+
+  :param ip: địa chỉ ip của PLC
+  :param port: địa chỉ cổng của PLC
+  :param start: địa chỉ bắt đầu đọc (0 -> I0; 1 -> I1)
+  :param size: số lượng byte đọc
+  :param rack: số rack của PLC (theo cấu hình PLC)
+  :param slot: số slot của PLC (theo cấu hình PLC)
+
+  :return: mảng dữ liệu đọc được (byte[]) hoặc None nếu có lỗi
   '''
   client = Client()
   try:
@@ -52,6 +71,15 @@ def read_input(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1)
 def read_output(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1):
   '''
   Đọc dữ liệu đầu ra (outputs)
+
+  :param ip: địa chỉ ip của PLC
+  :param port: địa chỉ cổng của PLC
+  :param start: địa chỉ bắt đầu đọc (0 -> Q0; 1 -> Q1)
+  :param size: số lượng byte đọc
+  :param rack: số rack của PLC (theo cấu hình PLC)
+  :param slot: số slot của PLC (theo cấu hình PLC)
+
+  :return: mảng dữ liệu đọc được (byte[]) hoặc None nếu có lỗi
   '''
   client = Client()
   try:
@@ -78,6 +106,15 @@ def read_output(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1
 def read_memory(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1):
   '''
   Đọc dữ liệu từ vùng nhớ memory
+
+  :param ip: địa chỉ ip của PLC
+  :param port: địa chỉ cổng của PLC
+  :param start_addr: địa chỉ bắt đầu đọc
+  :param size: số lượng byte đọc
+  :param rack: số rack của PLC (theo cấu hình PLC)
+  :param slot: số slot của PLC (theo cấu hình PLC)
+
+  :return: mảng dữ liệu đọc được (byte[]) hoặc None nếu có lỗi
   '''
   client = Client()
   try:
@@ -102,11 +139,10 @@ def read_memory(ip, port, start_addr: int = 0, size: int = 2, rack = 0, slot = 1
       pass
 
 def main():
-  ip = "192.168.0.2"        # địa chỉ mô phỏng
-  port = 102
+  # địa chỉ mô phỏng: 127.0.0.1:5102
   
-  rack = 0
-  slot = 1
+  ip = "192.168.0.2"
+  port = 102
   db = 1
   start = 0
   size = 10

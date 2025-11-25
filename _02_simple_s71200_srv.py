@@ -6,13 +6,13 @@ Mô phỏng PLC S7-1200: 3 vùng bộ nhớ
 - DB1 (10 bytes)
 '''
 
-
 from snap7.server import Server
 from snap7.type import SrvArea
 import ctypes
 from datetime import datetime
 import time
 
+# Khai báo các vùng nhớ (Global) với kích thước theo PLC
 PLC_IN = (ctypes.c_ubyte * 2)()
 PLC_OUT = (ctypes.c_ubyte * 2)()
 PLC_M = (ctypes.c_ubyte * 10)()

@@ -85,10 +85,10 @@ class S7Ui(tk.Tk):
             leds_list.append((canvas, oval))
 
             # allow clicking LED to toggle (useful for testing)
-            def make_toggle(ind, canvas=canvas):
-                return lambda e: self._toggle_led_by_index(ind, is_input)
-            if not is_input:
-              canvas.bind("<Button-1>", make_toggle(i))
+            # def make_toggle(ind, canvas=canvas):
+            #     return lambda e: self._toggle_led_by_index(ind, is_input)
+            # if not is_input:
+            #   canvas.bind("<Button-1>", make_toggle(i))
 
     def _toggle_led_by_index(self, index, is_input=True):
         # Toggle LED state for testing/demo
