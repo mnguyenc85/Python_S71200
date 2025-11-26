@@ -6,6 +6,53 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 import time
+import socket, crcmod
+
+def crc16(data: bytes, sz: int):
+    crc = 0xFFFF
+    n = min(sz, len(data))
+    for i in range(n):
+        pos = data[i]
+        crc ^= pos
+        for _ in range(8):
+            if crc & 1:
+                crc >>= 1
+                crc ^= 0xA001
+            else:
+                crc >>= 1
+    return crc.to_bytes(2, "little")
+
+class KetNoiTDA08B:
+    def __init__(self):
+        self.client :socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def connect(self, ip, port):
+        self.client.connect((ip, port))
+
+    def disconnect(self):
+        self.client.close()
+
+    def readkl(self) -> float:
+        # Modbus RTU frame: [addr][func][addr_hi][addr_lo][len_hi][len_lo][crc_lo][crc_hi]
+        addr = 1
+        func = 3
+        len = 2
+        len_hi = len >> 8
+        len_lo = len % 256
+        frame = bytes([addr, func, 0x00, 0x0b, len_hi, len_lo])
+        frame += crc16(frame, 6)
+
+        self.client.send(frame)
+
+        resp = self.client.recv(1024)
+        #crc = crc16(resp, 3 + len * 2)
+        if resp[0] == addr and resp[1] == func:
+            kl = resp[3] << 24 | resp[4] << 16 | resp[5] << 8 | resp[6]
+            return kl / 1000.0
+
+        return 0
+
+ketnoi = KetNoiTDA08B()
 
 class DeviceControlApp(tk.Tk):
     def __init__(self):
@@ -13,12 +60,14 @@ class DeviceControlApp(tk.Tk):
         super().__init__()
         self.title("Đọc đầu cân TDA 08B")
         
+        self.user_connected = 0
         # Biến trạng thái
         self.status_var = tk.StringVar(value="Trạng thái: Chưa kết nối")
         self.connect_time_var = tk.StringVar(value="Thời gian kết nối: N/A")
-        
+        self.status_kl = tk.StringVar(value="0")
+
         # Gọi phương thức để xây dựng giao diện người dùng
-        self._create_widgets()
+        self._create_widgets()        
 
     def _create_widgets(self):
         """
@@ -59,9 +108,11 @@ class DeviceControlApp(tk.Tk):
         frame_row2.grid(row=1, column=0, sticky="ew")
 
         # Text KL
-        ttk.Label(frame_row2, text="Text KL:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.text_kl_entry = ttk.Label(frame_row2, width=30)
-        self.text_kl_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_row2, text="KL:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.text_kl_entry = ttk.Label(
+            frame_row2, 
+            textvariable=self.status_kl, 
+            width=30).grid(row=0, column=1, padx=5, pady=5)
 
         # Nút Read
         ttk.Button(
@@ -96,7 +147,6 @@ class DeviceControlApp(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
 
 
-    ## 🛠️ Phương thức xử lý sự kiện
     def connect_device(self):
         """Xử lý sự kiện Connect/Ngắt kết nối."""
         
@@ -107,53 +157,47 @@ class DeviceControlApp(tk.Tk):
 
         # Lấy giá trị IP và Port
         ip = self.ip_entry.get()
-        port = self.port_entry.get()
+        portStr = self.port_entry.get()
+        port = int(portStr)
         
         if not ip or not port:
-            self.status_var.set("Trạng thái: ⚠️ Chưa nhập IP/Port")
+            self.status_var.set("Trạng thái: Chưa nhập IP/Port")
             self.connect_time_var.set("Thời gian kết nối: N/A")
             return
 
         print(f"Đang cố gắng kết nối tới {ip}:{port}...")
         
-        # --- Mô phỏng quá trình kết nối thực tế ---
-        # Bạn sẽ thay thế phần này bằng thư viện socket (ví dụ: client_socket.connect((ip, port)))
-        time.sleep(0.5) 
-        is_connected = True 
+        try:
+            ketnoi.connect(ip, port)
 
-        if is_connected:
-            current_time = datetime.now().strftime("%H:%M:%S")
-            self.status_var.set("Trạng thái: ✅ Đã kết nối")
-            self.connect_time_var.set(f"Thời gian kết nối: {current_time}")
+            self.status_var.set("Trạng thái: Đã kết nối")
             self.connect_button.config(text="Ngắt kết nối", command=self.connect_device)
             print("Kết nối thành công.")
-        else:
-            self.status_var.set("Trạng thái: ❌ Kết nối thất bại")
-            self.connect_time_var.set("Thời gian kết nối: N/A")
+            self.user_connected = 1
+        except:
+            self.status_var.set("Trạng thái: Kết nối thất bại")
             print("Kết nối thất bại.")
+            self.user_connected = 0
     
     def _disconnect_device(self):
-        """Phương thức nội bộ để ngắt kết nối."""
-        print("Đang ngắt kết nối...")
-        self.status_var.set("Trạng thái: 🛑 Đã ngắt kết nối")
-        self.connect_time_var.set("Thời gian kết nối: N/A")
-        self.connect_button.config(text="Connect", command=self.connect_device)
-        print("Ngắt kết nối thành công.")
-
+        try:
+            ketnoi.disconnect()
+            self.connect_button.config(text="Kết nối", command=self.connect_device)
+            self.status_var.set("Trạng thái: Dừng kết nối")
+            self.user_connected = 0
+        except:
+            print("Lỗi ngắt kết nối")
+            self.user_connected = 0
 
     def read_data(self):
-        """Xử lý sự kiện Đọc dữ liệu."""
-        text_kl = self.text_kl_entry.get()
-        
-        # Kiểm tra trạng thái kết nối
-        if "Đã kết nối" in self.status_var.get():
-            print(f"Đang đọc dữ liệu với lệnh: {text_kl}")
-            # Thêm logic gửi lệnh/đọc dữ liệu qua socket ở đây
-            self.status_var.set(f"Trạng thái: ⚙️ Đã gửi lệnh '{text_kl}'")
-        else:
-            print("Không thể đọc. Chưa kết nối.")
-            self.status_var.set("Trạng thái: ⚠️ Vui lòng kết nối trước")
+        if self.user_connected:
+            conn_t0 = datetime.now()
 
+            kl = ketnoi.readkl()
+            self.status_kl.set(f"{kl:.3f}")
+
+            et = (datetime.now() - conn_t0).microseconds / 1000.0;
+            self.connect_time_var.set(f"Thời gian kết nối: {et:.3f} ms")
 
 # --- Khối chạy chương trình ---
 if __name__ == "__main__":
