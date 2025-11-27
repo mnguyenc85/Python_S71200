@@ -157,6 +157,14 @@ class S7Ui(tk.Tk):
             self.set_output(i, obuf[byte_i] & mask == mask)
             mask = mask << 1
 
+        ibuf = s7conn.read_input(self.s71200_client)
+        if ibuf:
+          mask = 1
+          for i in range(16):
+            byte_i = int(i / 8)
+            self.set_input(i, ibuf[byte_i] & mask == mask)
+            mask = mask << 1           
+
       self.poll_count += 1
       if self.is_connecting:
         self.poll_job_id = self.after(POLL_CYCLE, self._read_plc)

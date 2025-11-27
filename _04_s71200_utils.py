@@ -40,3 +40,20 @@ def read_output(client, start_addr: int = 0, size: int = 2):
       print(f"Error reading output: {client.error_text(result_code)}")
   except Exception:
     pass
+
+def read_input(client, start_addr: int = 0, size: int = 2):
+  '''
+  Đọc dữ liệu đầu vào
+  '''
+  try:
+    # Output area: Areas.PE; db = 0
+    buffer = client.read_area(Areas.PE, 0, start_addr, size)
+    result_code = client.get_last_error()
+
+    if result_code == 0:
+      # Data successfully read, process the buffer
+      return buffer
+    else:
+      print(f"Error reading output: {client.error_text(result_code)}")
+  except Exception:
+    pass
